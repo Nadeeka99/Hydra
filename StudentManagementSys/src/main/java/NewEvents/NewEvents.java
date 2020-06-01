@@ -4,20 +4,74 @@
  * and open the template in the editor.
  */
 package NewEvents;
+import java.beans.Statement;
+
+import java.sql.Connection;
+
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 /**
  *
  * @author Shavindya
  */
 public class NewEvents extends javax.swing.JFrame {
-
-    /**
-     * Creates new form NewEvents
-     */
+     
+    String EventName;
+    String Description;
+    String ContactNumber;
+    String EventTime;
+    String Keyword;
+    
     public NewEvents() {
         initComponents();
+        show_event();
     }
+         public ArrayList<Event> eventList(){
+             ArrayList<Event> eventsList = new ArrayList<>();
+             try{
+               Class.forName("com.mysql.jdbc.Driver");
+                 Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/sys","root","password");
+                 String sql = "Select * from handling";
+                 java.sql.Statement st = con.createStatement();
+                 ResultSet rs = st.executeQuery(sql);
+                 Event event;
 
+                 
+                 while(rs.next()){
+                     event = new Event(rs.getString("EventName"),rs.getString("Description"),rs.getString("ContactNumber"),rs.getString("EventTime"),rs.getString("Keyword"));
+                     eventsList.add(event);
+                 }
+                 
+                 
+         } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, ex);
+        
+        }
+             return eventsList;
+         }       
+         public void show_event(){
+             ArrayList<Event> list = eventList();
+             DefaultTableModel model = (DefaultTableModel)jTable1_Display_Event.getModel();
+             Object[] row = new Object[5];
+             for(int i=0;i<list.size();i++){
+                 row[0]=list.get(i).getEventName();
+                 row[1]=list.get(i).getDescription();
+                 row[2]=list.get(i).getContactNumber();
+                 row[3]=list.get(i).getEventTime();
+                 row[4]=list.get(i).getKeyword();
+                 model.addRow(row);
+                 
+             }
+             
+         }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -44,7 +98,7 @@ public class NewEvents extends javax.swing.JFrame {
         DeleteButton2 = new javax.swing.JButton();
         DisplayButton3 = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        jTable1_Display_Event = new javax.swing.JTable();
         jLabel7 = new javax.swing.JLabel();
         Search = new javax.swing.JTextField();
         SearchButton5 = new javax.swing.JButton();
@@ -128,16 +182,21 @@ public class NewEvents extends javax.swing.JFrame {
             }
         });
 
-        jTable1.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        jTable1_Display_Event.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        jTable1_Display_Event.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Event Name", "Description", "Contact Number", "Event Time", "Keyword"
+                "EventName", "Description", "ContactNumber", "EventTime", "Keyword"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
+        jTable1_Display_Event.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTable1_Display_EventMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(jTable1_Display_Event);
 
         jLabel7.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
@@ -268,7 +327,32 @@ public class NewEvents extends javax.swing.JFrame {
     }//GEN-LAST:event_NameActionPerformed
 
     private void NewButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NewButton1ActionPerformed
-      
+            
+        try{
+                 Class.forName("com.mysql.jdbc.Driver");
+                 Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/sys","root","password");      
+                 String query = "insert into handling(EventName, Description, ContactNumber, EventTime, Keyword)values(?,?,?,?,?)";
+                 PreparedStatement pst = con.prepareStatement(query);
+                 pst.setString(1,Name.getText());
+                 pst.setString(2,Des.getText());
+                 pst.setString(3,Contact.getText());
+                 pst.setString(4,Time.getText());
+                 pst.setString(5,Key.getText());
+                 pst.executeUpdate();
+            DefaultTableModel model = (DefaultTableModel)jTable1_Display_Event.getModel();
+            model.setRowCount(0);
+            show_event();
+                         
+                          
+                         
+                         
+                         
+           } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, ex);
+        
+        }
+                 
+            
       Name.getText();
       Des.getText();
       Contact.getText();
@@ -289,7 +373,25 @@ public class NewEvents extends javax.swing.JFrame {
             JOptionPane.YES_NO_OPTION);{
 
         if(reply ==JOptionPane.YES_OPTION ){
+             try{
+                 Class.forName("com.mysql.jdbc.Driver");
+                 Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/sys","root","password");    
+            int row = jTable1_Display_Event.getSelectedRow();
+            String value=(jTable1_Display_Event.getModel().getValueAt(row,0).toString());           
+            String query ="Delete from handling  where EventName="+value;
+            PreparedStatement pst = con.prepareStatement(query);
+            pst.executeUpdate();
+            DefaultTableModel model = (DefaultTableModel)jTable1_Display_Event.getModel();
+            model.setRowCount(0);
+            show_event();
+            
             JOptionPane.showMessageDialog(null,"Successfully Deleted.","Message",JOptionPane.ERROR_MESSAGE);
+             }  
+             catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, ex);}
+            
+            
+            
         }
         else {
             JOptionPane.showMessageDialog(null, "Event is not deleted","Message",JOptionPane.WARNING_MESSAGE);
@@ -313,6 +415,17 @@ public class NewEvents extends javax.swing.JFrame {
    
         JOptionPane.showConfirmDialog(null,"Edit the selected Event?","Question",JOptionPane.YES_NO_OPTION);
     }//GEN-LAST:event_EditButton4ActionPerformed
+
+    private void jTable1_Display_EventMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1_Display_EventMouseClicked
+        int i =jTable1_Display_Event.getSelectedRow();
+        TableModel model = jTable1_Display_Event.getModel();
+        Name.setText(model.getValueAt(i,0).toString());
+        Des.setText(model.getValueAt(i,1).toString());
+        Contact.setText(model.getValueAt(i,2).toString());
+        Time.setText(model.getValueAt(i,3).toString());
+        Key.setText(model.getValueAt(i,4).toString());
+        
+    }//GEN-LAST:event_jTable1_Display_EventMouseClicked
 
     /**
      * @param args the command line arguments
@@ -371,6 +484,6 @@ public class NewEvents extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JTable jTable1_Display_Event;
     // End of variables declaration//GEN-END:variables
 }
